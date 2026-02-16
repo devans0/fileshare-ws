@@ -70,7 +70,7 @@ public class DatabaseManager {
 	 *                      when a connection is requested from an uninitialized
 	 *                      DatabaseConfig object.
 	 */
-	public static Connection getConnection() throws SQLException {
+	private static Connection getConnection() throws SQLException {
 		if (!initialized) {
 			throw new SQLException("DatabaseConfig has not been initialized with a properties file.");
 		}
@@ -373,24 +373,3 @@ public class DatabaseManager {
 		}
 	} // disconnect
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
