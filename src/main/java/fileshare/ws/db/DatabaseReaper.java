@@ -27,7 +27,6 @@ import fileshare.ws.util.ConfigLoader;
 @Singleton 
 @Startup
 public class DatabaseReaper {
-	private static final DatabaseManager db = new DatabaseManager();
 	private final String STALE_FILE_AGE;
 	
 	// Initialize the reaper by defining the maximum age of a file before it is considered stale
@@ -38,7 +37,7 @@ public class DatabaseReaper {
 	// Run a cleanup operation every 60 seconds
 	@Schedule(second="0", minute = "*", hour = "*", persistent = false)
 	public void executeCleanup() {
-		int deletedRows = db.reap(STALE_FILE_AGE);
+		int deletedRows = DatabaseManager.reap(STALE_FILE_AGE);
 		if (deletedRows > 0) {
 			System.out.println("[REAPER] Removed " + deletedRows + " stale file entries.");
 		}

@@ -16,7 +16,7 @@ package fileshare.ws.service;
 
 import jakarta.jws.WebService;
 
-@WebService
+@WebService(serviceName = "FileShareService")
 public class FileShareWS {
 
 }
