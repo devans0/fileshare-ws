@@ -18,6 +18,7 @@
 
 package fileshare.ws.db;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.ejb.Schedule;
 import jakarta.ejb.Singleton;
 import jakarta.ejb.Startup;
@@ -26,18 +27,24 @@ import fileshare.ws.util.ConfigLoader;
 
 @Singleton 
 @Startup
-public class DatabaseReaper {
-	private final String STALE_FILE_AGE;
+public class DatabaseWatchdog {
+	private final String staleFileMaxAge;
 	
 	// Initialize the reaper by defining the maximum age of a file before it is considered stale
-	public DatabaseReaper() {
-		STALE_FILE_AGE = ConfigLoader.getProperty("db.stale_file_age", "30");
+	public DatabaseWatchdog() {
+		staleFileMaxAge = ConfigLoader.getProperty("db.stale_file_age", "30");
+	}
+	
+	@PostConstruct
+	public void startup() {
+		System.out.println("[WATCHDOG] Verifying database schema...");
+		DatabaseManager.verifyDatabase();
 	}
 	
 	// Run a cleanup operation every 60 seconds
 	@Schedule(second="0", minute = "*", hour = "*", persistent = false)
 	public void executeCleanup() {
-		int deletedRows = DatabaseManager.reap(STALE_FILE_AGE);
+		int deletedRows = DatabaseManager.reap(staleFileMaxAge);
 		if (deletedRows > 0) {
 			System.out.println("[REAPER] Removed " + deletedRows + " stale file entries.");
 		}

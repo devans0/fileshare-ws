@@ -32,7 +32,7 @@ import java.util.List;
 
 public class DatabaseManager {
 	// Defaults
-	private static final String DEFAULT_DB_URL = "jdbc:postgresql://localhost:5432/catalog_db";
+	private static final String DEFAULT_DB_URL = "jdbc:postgresql://localhost:5432/fileshare_db";
 	private static final String DEFAULT_DB_USER = "fileshare_service";
 	private static final String DEFAULT_DB_PASS = "";
 
@@ -57,7 +57,6 @@ public class DatabaseManager {
 		dbUser = ConfigLoader.getProperty("db.user", DEFAULT_DB_USER);
 		dbPassword = ConfigLoader.getProperty("db.password", DEFAULT_DB_PASS);
 		initialized = true;
-		verifyDatabase();
 	}
 
 	/**
@@ -90,7 +89,7 @@ public class DatabaseManager {
 	 * use. If the database cannot be reached, this constitutes a critical error and
 	 * results in a runtime exception.
 	 */
-	private static void verifyDatabase() {
+	public static void verifyDatabase() {
 		try (Connection conn = getConnection()) {
 
 			DatabaseMetaData dbm = conn.getMetaData();
@@ -153,18 +152,21 @@ public class DatabaseManager {
 			throw new RuntimeException("[REAPER] stale_file_age invalid, check configuration", nfe);
 		}
 		
-		String sql = "DELETE FROM file_entries WHERE last_seen < NOW() - INTERVAL '" + 
-					  (staleAgeSecs + 1) + " seconds'";
+		String sql = "DELETE FROM file_entries WHERE last_seen < NOW() - (? * INTERVAL '1 second')";
 		int deletedRows = 0;
 
 		try (Connection conn = getConnection();
 			 PreparedStatement pstmt = conn.prepareStatement(sql)){
 			
-			deletedRows = pstmt.executeUpdate(sql);
+			pstmt.setInt(1, staleAgeSecs + 1);
+			deletedRows = pstmt.executeUpdate();
 			if (deletedRows > 0) {
 				System.out.println("[REAPER] Purged " + deletedRows + " stale file(s).");
+			} else {
+				System.out.println("[REAPER] No stale files to remove.");
 			}
 		} catch (SQLException sqle) {
+			System.err.println("[REAPER] SQL State: " + sqle.getSQLState());
 			System.err.println("[REAPER] Error during cleanup " + sqle.getMessage());
 		}
 		return deletedRows;
