@@ -29,12 +29,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimeZone;
 
 public class DatabaseManager {
 	// Defaults
 	private static final String DEFAULT_DB_URL = "jdbc:postgresql://localhost:5432/fileshare_db";
 	private static final String DEFAULT_DB_USER = "fileshare_service";
 	private static final String DEFAULT_DB_PASS = "";
+	private static final String DEFAULT_DB_TZ = "UTC";
 
 	// Database configuration
 	private static String dbURL;
@@ -56,6 +58,11 @@ public class DatabaseManager {
 		dbURL = ConfigLoader.getProperty("db.url", DEFAULT_DB_URL);
 		dbUser = ConfigLoader.getProperty("db.user", DEFAULT_DB_USER);
 		dbPassword = ConfigLoader.getProperty("db.password", DEFAULT_DB_PASS);
+		// Set the time zone; avoids errors with reaper and heartbeats
+		String timezone = ConfigLoader.getProperty("db.timezone", DEFAULT_DB_TZ);
+		TimeZone.setDefault(TimeZone.getTimeZone(timezone));
+				
+		// Initialization complete; ready for interacting with the database
 		initialized = true;
 	}
 
@@ -253,7 +260,8 @@ public class DatabaseManager {
 			// Iterate over the results and add new FileInfo objects to the list
 			try (ResultSet rs = pstmt.executeQuery()) {
 				while (rs.next()) {
-					fileList.add(new FileInfo(rs.getInt("id"), rs.getString("file_name"), null, null));
+					// For a search, do not return any identifying information
+					fileList.add(new FileInfo(rs.getInt("id"), rs.getString("file_name"), "unknown", -1));
 				}
 			}
 		} catch (SQLException sqle) {

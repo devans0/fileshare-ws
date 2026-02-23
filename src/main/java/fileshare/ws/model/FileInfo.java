@@ -28,11 +28,11 @@ public class FileInfo implements Serializable {
 	private int fileID; 
 	private String fileName;
 	private String ownerIP;
-	private Integer port;
+	private int port;
 	
 	public FileInfo() {} // ctor
 	
-	public FileInfo (int fileID, String fileName, String ownerIP, Integer port) {
+	public FileInfo (int fileID, String fileName, String ownerIP, int port) {
 		this.fileID = fileID;
 		this.fileName = fileName;
 		this.ownerIP = ownerIP;
