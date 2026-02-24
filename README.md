@@ -45,6 +45,11 @@ uses a non-standard port, also add the following option:
 
     -Dwildfly.port=<port>
 
+When it is time to shut down the service run the following, with the appropriate
+command line options as above:
+
+    mvn wildfly:undeploy
+
 ### Building and Deploying via Eclipse
 This approach allows for building and deploying using Eclipse to manage the server
 and handle publishing the service. Follow these steps:
