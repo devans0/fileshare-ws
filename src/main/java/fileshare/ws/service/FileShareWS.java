@@ -28,13 +28,13 @@ public class FileShareWS {
 	public FileShareWS() {}
 	
 	@WebMethod
-	public void listFile(String ownerID, String fileName, String ownerIP, int ownerPort) {
-		DatabaseManager.listFile(ownerID, fileName, ownerIP, ownerPort);
+	public int listFile(String ownerID, String fileName, String ownerIP, int ownerPort) {
+		return DatabaseManager.listFile(ownerID, fileName, ownerIP, ownerPort);
 	}
 	
 	@WebMethod
-	public void delistFile(String fileName, String peerID) {
-		DatabaseManager.delistFile(fileName, peerID);
+	public void delistFile(int fileID, String peerID) {
+		DatabaseManager.delistFile(fileID, peerID);
 	}
 	
 	@WebMethod

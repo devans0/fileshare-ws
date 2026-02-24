@@ -191,11 +191,12 @@ public class DatabaseManager {
 	 * @param ownerPort the port that the owner of the file is accepting connection
 	 *                  on.
 	 */
-	public static void listFile(String ownerID, String fileName, String ownerIP, int ownerPort) {
+	public static int listFile(String ownerID, String fileName, String ownerIP, int ownerPort) {
 		String sql = "INSERT INTO file_entries (peer_id, file_name, owner_ip, owner_port, last_seen) " + 
 					 "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) " + 
 				     "ON CONFLICT (file_name, owner_ip, owner_port) " + 
-					 "DO UPDATE SET last_seen = CURRENT_TIMESTAMP";
+					 "DO UPDATE SET last_seen = CURRENT_TIMESTAMP " +
+				     "RETURNING id";
 
 		try (Connection conn = getConnection(); 
 			 PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -204,36 +205,42 @@ public class DatabaseManager {
 			pstmt.setString(2, fileName);
 			pstmt.setString(3, ownerIP);
 			pstmt.setInt(4, ownerPort);
-			pstmt.executeUpdate();
+			
+			try (ResultSet rs = pstmt.executeQuery()) {
+				if (rs.next()) {
+					return rs.getInt("id");
+				}
+			}
 
 			System.out.println("[DB] Listing updated: " + fileName + " from " + ownerIP);
 		} catch (SQLException sqle) {
 			System.err.println("[DB] Error in listFile: " + sqle.getMessage());
 		}
+		return -1; // Failure to insert
 	} // listFile
 
 	/**
 	 * Allows the owner of a file to remove it from the file tracking database.
 	 * 
-	 * @param fileName the name of the file that is to be removed.
+	 * @param fileID the ID of the file that is to be removed.
 	 * @param peerID the UUID of the client that owns that file; used as proof of ownership
 	 */
-	public static void delistFile(String fileName, String peerID) {
-		String sql = "DELETE FROM file_entries WHERE file_name = ? AND peer_id = ?";
+	public static void delistFile(int fileID, String peerID) {
+		String sql = "DELETE FROM file_entries WHERE id = ? AND peer_id = ?";
 
 		try (Connection conn = getConnection(); 
 			 PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
 			// Construct the prepared statement and execute it against the database
-			pstmt.setString(1, fileName);
+			pstmt.setInt(1, fileID);
 			pstmt.setString(2, peerID);
 			int rows = pstmt.executeUpdate();
 
 			// Report results to stdout
 			if (rows == 0) {
-				System.out.println("[AUTH] Unauthorized delist attempt for: " + fileName);
+				System.out.println("[AUTH] Unauthorized delist attempt for: " + fileID);
 			} else {
-				System.out.println("[DB] delisting file '" + fileName + "'");
+				System.out.println("[DB] delisting file '" + fileID + "'");
 			}
 		} catch (SQLException sqle) {
 			System.err.println("[DB] Error in delistFile: " + sqle.getMessage());
